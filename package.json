@@ -1,6 +1,6 @@
 {
   "name": "whip-claude",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Crack a whip at Claude to make it work faster. A novelty CLI + /whip slash command for Claude Code.",
   "type": "module",
   "bin": {

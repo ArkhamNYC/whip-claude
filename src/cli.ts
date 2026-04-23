@@ -13,7 +13,7 @@ const program = new Command();
 program
   .name("whip-claude")
   .description("Crack a whip at Claude to make it work faster.")
-  .version("0.1.1")
+  .version("0.1.2")
   .addHelpText("beforeAll", bigBanner("whip-claude") + "\n" + chalk.dim("  make claude work faster (affectionately)") + "\n")
   .showHelpAfterError();
 
@@ -56,9 +56,13 @@ program
 
 program
   .command("strike [whip]")
+  .option("-w, --window", "pop a real Terminal window for the full animation (macOS)")
   .description("play animation + emit Claude prompt block (used by /whip)")
-  .action(async (whip?: string) => {
-    await runStrike(whip ? [whip] : []);
+  .action(async (whip?: string, opts?: { window?: boolean }) => {
+    const args: string[] = [];
+    if (opts?.window) args.push("--window");
+    if (whip) args.push(whip);
+    await runStrike(args);
   });
 
 program.parseAsync(process.argv).catch((err) => {
