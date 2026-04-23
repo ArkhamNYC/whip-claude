@@ -1,8 +1,6 @@
 import chalk from "chalk";
-import figlet from "figlet";
-import { Box, Text, useApp, useInput, useStdin } from "ink";
-import Gradient from "ink-gradient";
-import React, { useEffect, useMemo, useState } from "react";
+import { Box, Static, Text, useApp, useInput, useStdin } from "ink";
+import { useEffect, useMemo, useState } from "react";
 import { loadConfig, saveConfig, type WhipConfig } from "../config/store.js";
 import { strengthBar } from "../render/ui.js";
 import { listWhips } from "../whips/registry.js";
@@ -15,13 +13,10 @@ export interface AppProps {
   onExit(e: Exit): void;
 }
 
-function makeBanner(): string {
-  try {
-    return figlet.textSync("whip-claude", { font: "Small" });
-  } catch {
-    return "whip-claude";
-  }
-}
+// Fixed line budget for preview frame area — every frame renders to this many
+// lines, so layout doesn't shift between frames and Ink can redraw in place
+// without pushing content off-screen.
+const PREVIEW_LINES = 10;
 
 export function App({ onExit }: AppProps) {
   const { exit } = useApp();
@@ -40,51 +35,73 @@ export function App({ onExit }: AppProps) {
     return () => clearTimeout(t);
   }, [toast]);
 
-  const bannerText = useMemo(() => makeBanner(), []);
-
-  useInput((input, key) => {
-    if (!isRawModeSupported) return;
-    if (input === "q" || key.escape) {
-      exit();
-      onExit({ kind: "quit" });
-      return;
-    }
-    if (key.upArrow || input === "k") {
-      setSelected((i) => (i - 1 + whips.length) % whips.length);
-      return;
-    }
-    if (key.downArrow || input === "j") {
-      setSelected((i) => (i + 1) % whips.length);
-      return;
-    }
-    if (key.return) {
-      const next = { ...config, defaultWhip: whips[selected]!.name };
-      setConfig(next);
-      saveConfig(next);
-      setToast(`saved default → ${whips[selected]!.displayName}`);
-      return;
-    }
-    if (input === "s") {
-      exit();
-      onExit({ kind: "demo", whip: whips[selected]!.name });
-      return;
-    }
-    if (input === "c") {
-      exit();
-      onExit({ kind: "customize" });
-      return;
-    }
-  }, { isActive: isRawModeSupported });
+  useInput(
+    (input, key) => {
+      if (!isRawModeSupported) return;
+      if (input === "q" || key.escape) {
+        exit();
+        onExit({ kind: "quit" });
+        return;
+      }
+      if (key.upArrow || input === "k") {
+        setSelected((i) => (i - 1 + whips.length) % whips.length);
+        return;
+      }
+      if (key.downArrow || input === "j") {
+        setSelected((i) => (i + 1) % whips.length);
+        return;
+      }
+      if (key.return) {
+        const next = { ...config, defaultWhip: whips[selected]!.name };
+        setConfig(next);
+        saveConfig(next);
+        setToast(`saved default → ${whips[selected]!.displayName}`);
+        return;
+      }
+      if (input === "s") {
+        exit();
+        onExit({ kind: "demo", whip: whips[selected]!.name });
+        return;
+      }
+      if (input === "c") {
+        exit();
+        onExit({ kind: "customize" });
+        return;
+      }
+    },
+    { isActive: isRawModeSupported }
+  );
 
   const active: Whip = whips[selected] ?? whips[0]!;
 
+  // Short, gradient-ish one-line title — figlet banners were causing Ink to
+  // stack on viewport overflow. This fits in one row.
+  const title = chalk.bold(
+    chalk.hex("#ff6b6b")("▰") +
+      chalk.hex("#ffd93d")("▰") +
+      chalk.hex("#6bff6b")("▰") +
+      " " +
+      chalk.hex("#c56bff")("whip") +
+      chalk.dim("-") +
+      chalk.hex("#6bd1ff")("claude") +
+      " " +
+      chalk.hex("#6bff6b")("▰") +
+      chalk.hex("#ffd93d")("▰") +
+      chalk.hex("#ff6b6b")("▰")
+  );
+
   return (
     <Box flexDirection="column">
-      <Gradient name="pastel">
-        <Text>{bannerText}</Text>
-      </Gradient>
-      <Text dimColor>  pick a whip. press enter to save it as your default.</Text>
-      <Text> </Text>
+      {/* Header renders exactly once — never re-renders with frame updates. */}
+      <Static items={[{ id: "header" }]}>
+        {() => (
+          <Box key="header" flexDirection="column" paddingX={1}>
+            <Text>{title}</Text>
+            <Text dimColor>  pick a whip · enter saves as default · s plays demo</Text>
+            <Text> </Text>
+          </Box>
+        )}
+      </Static>
 
       <Box>
         {/* left — whip list */}
@@ -93,7 +110,7 @@ export function App({ onExit }: AppProps) {
           borderStyle="round"
           borderColor="gray"
           paddingX={1}
-          width={28}
+          width={24}
         >
           <Text bold>  whips</Text>
           <Text> </Text>
@@ -129,27 +146,25 @@ export function App({ onExit }: AppProps) {
             {chalk.dim(`  ${active.strength}/10`)}
           </Text>
           <Text dimColor italic>{active.tagline}</Text>
-          <Text> </Text>
-          <Preview whip={active} speed={config.animationSpeed} />
+          <Preview whip={active} speed={config.animationSpeed} lineBudget={PREVIEW_LINES} />
         </Box>
       </Box>
 
-      <Text> </Text>
-      <Text>
-        {chalk.dim("  ↑/↓ ")}
-        {chalk.bold("browse")}
-        {chalk.dim("   ⏎ ")}
-        {chalk.bold("set default")}
-        {chalk.dim("   s ")}
-        {chalk.bold("demo")}
-        {chalk.dim("   c ")}
-        {chalk.bold("customize")}
-        {chalk.dim("   q ")}
-        {chalk.bold("quit")}
-      </Text>
-      {toast && (
-        <Text>{chalk.green("  ✓ ")}{chalk.bold(toast)}</Text>
-      )}
+      <Box paddingX={1} marginTop={1}>
+        <Text>
+          {chalk.dim("↑/↓ ")}
+          {chalk.bold("browse")}
+          {chalk.dim("   ⏎ ")}
+          {chalk.bold("set default")}
+          {chalk.dim("   s ")}
+          {chalk.bold("demo")}
+          {chalk.dim("   c ")}
+          {chalk.bold("customize")}
+          {chalk.dim("   q ")}
+          {chalk.bold("quit")}
+          {toast ? chalk.green(`     ✓ ${toast}`) : ""}
+        </Text>
+      </Box>
     </Box>
   );
 }
