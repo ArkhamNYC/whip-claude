@@ -13,7 +13,7 @@ const program = new Command();
 program
   .name("whip-claude")
   .description("Crack a whip at Claude to make it work faster.")
-  .version("0.1.0")
+  .version("0.1.1")
   .addHelpText("beforeAll", bigBanner("whip-claude") + "\n" + chalk.dim("  make claude work faster (affectionately)") + "\n")
   .showHelpAfterError();
 

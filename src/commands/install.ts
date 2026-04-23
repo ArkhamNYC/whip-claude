@@ -15,7 +15,20 @@ import { box } from "../render/ui.js";
 function resolveInvoker(): string {
   const here = dirname(fileURLToPath(import.meta.url));
   const localCli = resolve(here, "cli.js");
-  if (existsSync(localCli)) {
+
+  // Never pin to an ephemeral path — npx cache, global npm cache, or pnpm store.
+  // All of these can be GC'd or change hash between runs.
+  const ephemeralMarkers = [
+    "/.npm/_npx/",
+    "/.npm/_cacache/",
+    "/npm-cache/_npx/",
+    "/.pnpm-store/",
+    "/pnpm-cache/",
+    "/npm/node_cache/",
+  ];
+  const isEphemeral = ephemeralMarkers.some((m) => localCli.includes(m));
+
+  if (existsSync(localCli) && !isEphemeral) {
     return `node ${JSON.stringify(localCli)}`;
   }
   return "npx -y whip-claude";
