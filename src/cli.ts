@@ -5,6 +5,7 @@ import { runDemo } from "./commands/demo.js";
 import { runInstall } from "./commands/install.js";
 import { runList } from "./commands/list.js";
 import { runStrike } from "./commands/strike.js";
+import { runTui } from "./commands/tui.js";
 import { runUninstall } from "./commands/uninstall.js";
 import { bigBanner } from "./render/banner.js";
 
@@ -13,7 +14,7 @@ const program = new Command();
 program
   .name("whip-claude")
   .description("Crack a whip at Claude to make it work faster.")
-  .version("0.1.2")
+  .version("0.2.0")
   .addHelpText("beforeAll", bigBanner("whip-claude") + "\n" + chalk.dim("  make claude work faster (affectionately)") + "\n")
   .showHelpAfterError();
 
@@ -52,6 +53,13 @@ program
   .description("choose your default whip, epithet, speed, and sound")
   .action(async () => {
     await runCustomize();
+  });
+
+program
+  .command("tui", { isDefault: true })
+  .description("interactive whip picker with live animation preview")
+  .action(async () => {
+    await runTui();
   });
 
 program

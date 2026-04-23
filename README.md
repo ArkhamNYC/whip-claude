@@ -55,10 +55,13 @@ Strength becomes Claude's speed multiplier in the injected prompt.
 
 ## Commands
 
+Run `whip-claude` with no arguments for the **interactive TUI** — arrow keys browse whips, live animation preview on each, enter to save the selection as your default, `s` to play a full demo, `c` to jump into customize, `q` to quit.
+
 ```bash
+whip-claude                         # interactive TUI (default)
 whip-claude install                 # install the /whip slash command
 whip-claude uninstall               # remove it (config preserved)
-whip-claude list                    # styled catalog with strength bars
+whip-claude list                    # static styled catalog with strength bars
 whip-claude demo <whip>             # preview any animation locally
 whip-claude customize               # pick default whip, epithet, speed, sound
 whip-claude strike <whip>           # used by /whip internally
