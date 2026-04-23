@@ -1,0 +1,20 @@
+# template — substitute {{NAME}} with each whip name (noodle, leather, ...)
+Output media/{{NAME}}.gif
+
+Set Shell "bash"
+Set FontSize 14
+Set Width 900
+Set Height 380
+Set Theme "Catppuccin Mocha"
+Set TypingSpeed 30ms
+Set Padding 20
+
+Hide
+Type "clear" Enter
+Show
+
+Sleep 300ms
+Type "whip-claude demo {{NAME}}"
+Sleep 300ms
+Enter
+Sleep 5s
